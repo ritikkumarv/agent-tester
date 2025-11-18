@@ -1,0 +1,117 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-tester"
+version = "0.1.0"
+description = "Production-grade testing framework for AI agents - as simple as Postman for APIs"
+readme = "README.md"
+authors = [
+    {name = "Ritik Kumar", email = "ritikkumarv@example.com"}
+]
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+keywords = ["ai", "agent", "testing", "validation", "framework", "llm", "openai", "azure"]
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.12.3",
+    "pydantic-core>=2.41.4",
+    "pydantic-settings>=2.12.0",
+    "pytest>=7.4.3",
+    "pytest-asyncio>=0.21.1",
+    "pytest-html>=3.2.0",
+    "pytest-cov>=4.1.0",
+    "click>=8.1.0",
+    "rich>=13.0.0",
+    "pyyaml>=6.0",
+    "jsonschema>=4.17.0",
+]
+
+[project.optional-dependencies]
+azure = [
+    "azure-identity>=1.26.0b1",
+    "azure-ai-projects>=2.0.0b2",
+    "azure-ai-agents>=1.2.0b5",
+    "azure-core>=1.36.0",
+]
+openai = [
+    "openai>=2.6.1",
+]
+anthropic = [
+    "anthropic>=0.7.0",
+]
+langchain = [
+    "langchain>=1.0.7",
+    "langchain-core>=1.0.5",
+    "langchain-openai>=0.1.0",
+]
+all = [
+    "azure-identity>=1.26.0b1",
+    "azure-ai-projects>=2.0.0b2",
+    "azure-ai-agents>=1.2.0b5",
+    "azure-core>=1.36.0",
+    "openai>=2.6.1",
+    "anthropic>=0.7.0",
+    "langchain>=1.0.7",
+    "langchain-core>=1.0.5",
+    "langchain-openai>=0.1.0",
+]
+dev = [
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.0.0",
+    "pylint>=2.17.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/ritikkumarv/agent-tester"
+Documentation = "https://github.com/ritikkumarv/agent-tester#readme"
+Repository = "https://github.com/ritikkumarv/agent-tester"
+Issues = "https://github.com/ritikkumarv/agent-tester/issues"
+
+[project.scripts]
+agent-tester = "agent_tester.cli:main"
+
+[tool.setuptools]
+packages = ["agent_tester", "agent_tester.adapters", "agent_tester.validators"]
+
+[tool.setuptools.package-data]
+agent_tester = ["py.typed"]
+
+[tool.black]
+line-length = 100
+target-version = ['py310', 'py311', 'py312']
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --strict-markers"
+markers = [
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+    "azure: marks tests requiring Azure credentials",
+    "openai: marks tests requiring OpenAI API key",
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]

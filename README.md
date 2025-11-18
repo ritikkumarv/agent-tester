@@ -58,6 +58,8 @@ agent-tester run -c agent_tests.yaml
 open test_report.html
 ```
 
+**👉 [Read the Complete Quick Start Guide](QUICKSTART.md)**
+
 ### Azure AI Foundry
 
 ```bash

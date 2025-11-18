@@ -180,29 +180,37 @@ validators:
 
 ```
 agent-tester/
-├── test_agent_framework.py    # Core framework
-├── tests/                      # Platform adapters
-│   ├── test_azure_ai_agents.py
-│   ├── test_real_agents.py
-│   └── test_azure_simple.py
-├── examples/                   # Usage examples
-├── DOCUMENTATION.md            # Complete documentation
-├── SECURITY.md                 # Security policy
-├── CONTRIBUTING.md             # Contribution guidelines
-└── requirements.txt            # Dependencies
+├── agent_tester/                # Main package
+│   ├── __init__.py              # Package exports
+│   ├── models.py                # Core data models
+│   ├── cli.py                   # Command-line interface
+│   ├── suite.py                 # Test orchestration
+│   ├── validators/              # Validation modules
+│   │   ├── task_validator.py
+│   │   ├── trajectory_validator.py
+│   │   └── memory_validator.py
+│   └── adapters/                # Platform adapters
+│       ├── azure_adapter.py     # Azure AI Foundry
+│       └── openai_adapter.py    # OpenAI
+├── examples/                    # Usage examples
+│   └── simple_example.py
+├── tests/                       # Test files
+├── pyproject.toml               # Package configuration
+├── QUICKSTART.md                # Getting started guide
+└── README.md                    # This file
 ```
 
 ## Testing
 
 ```bash
 # All tests
-pytest tests/ -v
+pytest test_agent_framework.py -v
 
 # With coverage
-pytest tests/ --cov=. --cov-report=html
+pytest test_agent_framework.py --cov=agent_tester --cov-report=html
 
-# Generate HTML report
-pytest tests/ --html=report.html --self-contained-html
+# Run simple example
+python examples/simple_example.py
 ```
 
 ## Documentation

@@ -1,10 +1,15 @@
-# AI Agent Testing Framework
+# 🤖 Agent Tester
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyPI version](https://img.shields.io/badge/pypi-v0.1.0-blue.svg)](https://pypi.org/project/agent-tester/)
 [![Code style: PEP8](https://img.shields.io/badge/code%20style-PEP8-brightgreen.svg)](https://www.python.org/dev/peps/pep-0008/)
 
+**Like Postman for APIs, but for AI Agents** 🚀
+
 Production-grade testing framework for AI agents. Validates Task completion, Trajectory efficiency, and Memory consistency across Azure AI Foundry, OpenAI, LangChain, and custom implementations.
+
+---
 
 ## Features
 
@@ -15,19 +20,45 @@ Production-grade testing framework for AI agents. Validates Task completion, Tra
 - **Enterprise-Ready**: Security-first design, comprehensive logging, CI/CD integration
 - **Extensible**: Adapter pattern for custom platforms
 
-## Quick Start
+## 🎯 Why Agent Tester?
+
+Testing AI agents shouldn't be harder than testing APIs. Agent Tester brings the simplicity of Postman to AI agent testing:
+
+- ✅ **Simple CLI** - Test agents with a single command
+- 📝 **YAML/JSON Configuration** - Define tests like Postman collections
+- 🎨 **Rich Output** - Beautiful, readable test results  
+- 🔌 **Multi-Platform** - Works with Azure, OpenAI, LangChain, and more
+- 🚀 **Production-Ready** - Enterprise-grade validation and reporting
+
+## 🚀 Quick Start
 
 ### Installation
 
 ```bash
-git clone <repository-url>
-cd agent-tester
-python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-.\.venv\Scripts\Activate.ps1  # Windows
+# Install from PyPI (coming soon)
+pip install agent-tester
 
-pip install -r requirements.txt
+# Or install from source
+git clone https://github.com/ritikkumarv/agent-tester.git
+cd agent-tester
+pip install -e .
 ```
+
+### Your First Test (30 seconds!)
+
+```bash
+# 1. Initialize a test configuration
+agent-tester init
+
+# 2. Edit agent_tests.yaml to define your tests
+# 3. Run tests
+agent-tester run -c agent_tests.yaml
+
+# 4. View beautiful HTML report
+open test_report.html
+```
+
+**👉 [Read the Complete Quick Start Guide](QUICKSTART.md)**
 
 ### Azure AI Foundry
 
@@ -53,57 +84,133 @@ export OPENAI_API_KEY="your-api-key"
 python examples/example_test_openai_agent.py
 ```
 
-## Usage
+## 💻 Usage
+
+### CLI (Recommended - Postman-like Experience)
+
+```bash
+# Initialize test configuration
+agent-tester init
+
+# Run all tests
+agent-tester run -c my_tests.yaml
+
+# Run with custom output
+agent-tester run -c my_tests.yaml -o custom_report.html
+
+# Quick validation
+agent-tester validate task1 --goal "Summarize this document"
+
+# See all commands
+agent-tester --help
+
+# View examples
+agent-tester examples
+```
+
+### Python API (For Programmatic Testing)
 
 ```python
-from tests.test_azure_ai_agents import AzureAIFoundryAgentAdapter
-from test_agent_framework import TaskDefinition, TaskValidator
-
-# Define task
-task = TaskDefinition(
-    task_id="sentiment_analysis",
-    goal="Analyze customer sentiment",
-    expected_output_schema={"required": ["sentiment", "confidence"]}
+from agent_tester import (
+    TaskDefinition, 
+    TaskValidator,
+    TrajectoryValidator,
+    MemoryValidator
 )
 
-# Execute
-adapter = AzureAIFoundryAgentAdapter()
-result = adapter.execute_task(task)
+# Define your test
+task = TaskDefinition(
+    task_id="sentiment_analysis",
+    goal="Analyze customer sentiment from reviews",
+    expected_output_schema={"required": ["sentiment", "confidence"]},
+    timeout_seconds=30
+)
 
-# Validate
+# Run your agent
+result = my_agent.execute(task)
+
+# Validate results
 validator = TaskValidator()
-validation = validator.validate(result["output"], task, result["execution_time"])
+validation = validator.validate(
+    result["output"], 
+    task, 
+    result["execution_time"]
+)
 
-print(f"Passed: {validation.passed}")
+print(f"✅ Passed: {validation.passed}")
+print(f"Goal Achieved: {validation.goal_achieved}")
+print(f"Constraints Met: {all(validation.constraints_met.values())}")
+```
+
+### Test Configuration Format (YAML)
+
+```yaml
+name: My Agent Test Suite
+description: Comprehensive tests for my AI agent
+
+tests:
+  - task_id: test_1
+    goal: "Summarize a technical document"
+    constraints:
+      - name: word_count
+        type: value_in_range
+        min_value: 50
+        max_value: 200
+    expected_output_schema:
+      required: ["summary", "key_points"]
+    timeout_seconds: 60
+
+  - task_id: test_2
+    goal: "Answer customer questions accurately"
+    expected_output_schema:
+      required: ["answer", "confidence"]
+    timeout_seconds: 30
+
+validators:
+  task:
+    strict_mode: false
+  trajectory:
+    max_actions: 20
+    allow_backtracking: true
+  memory:
+    min_retention_score: 0.7
 ```
 
 ## Project Structure
 
 ```
 agent-tester/
-├── test_agent_framework.py    # Core framework
-├── tests/                      # Platform adapters
-│   ├── test_azure_ai_agents.py
-│   ├── test_real_agents.py
-│   └── test_azure_simple.py
-├── examples/                   # Usage examples
-├── DOCUMENTATION.md            # Complete documentation
-├── SECURITY.md                 # Security policy
-├── CONTRIBUTING.md             # Contribution guidelines
-└── requirements.txt            # Dependencies
+├── agent_tester/                # Main package
+│   ├── __init__.py              # Package exports
+│   ├── models.py                # Core data models
+│   ├── cli.py                   # Command-line interface
+│   ├── suite.py                 # Test orchestration
+│   ├── validators/              # Validation modules
+│   │   ├── task_validator.py
+│   │   ├── trajectory_validator.py
+│   │   └── memory_validator.py
+│   └── adapters/                # Platform adapters
+│       ├── azure_adapter.py     # Azure AI Foundry
+│       └── openai_adapter.py    # OpenAI
+├── examples/                    # Usage examples
+│   └── simple_example.py
+├── tests/                       # Test files
+├── pyproject.toml               # Package configuration
+├── QUICKSTART.md                # Getting started guide
+└── README.md                    # This file
 ```
 
 ## Testing
 
 ```bash
 # All tests
-pytest tests/ -v
+pytest test_agent_framework.py -v
 
 # With coverage
-pytest tests/ --cov=. --cov-report=html
+pytest test_agent_framework.py --cov=agent_tester --cov-report=html
 
-# Generate HTML report
-pytest tests/ --html=report.html --self-contained-html
+# Run simple example
+python examples/simple_example.py
 ```
 
 ## Documentation

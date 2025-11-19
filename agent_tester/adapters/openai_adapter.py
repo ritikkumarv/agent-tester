@@ -80,30 +80,47 @@ class OpenAIAdapter:
         start_time = time.time()
         
         try:
-            # TODO: Implement actual OpenAI execution
-            # This is a placeholder showing the expected flow
+            # Initialize OpenAI client
+            try:
+                from openai import OpenAI
+                client = OpenAI(api_key=self.api_key)
+            except ImportError:
+                raise ImportError("OpenAI SDK not installed. Run: pip install openai")
+            
+            # Build system prompt
+            system_prompt = self._build_system_prompt(task)
             
             # Track LLM call
+            action_start = time.time()
+            response = client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": task.goal}
+                ],
+                temperature=0.7
+            )
+            action_duration = (time.time() - action_start) * 1000
+            
+            # Log action
             self._track_action(
                 ActionType.LLM_CALL,
                 input_data={
                     "model": self.model,
                     "messages": [
-                        {"role": "system", "content": self.system_message},
+                        {"role": "system", "content": system_prompt},
                         {"role": "user", "content": task.goal}
                     ]
                 },
-                output_data={"response": f"Completed: {task.goal}"},
-                duration_ms=800
+                output_data={"response": response.choices[0].message.content},
+                duration_ms=action_duration
             )
             
-            # Generate output
-            output = {
-                "status": "success",
-                "result": f"Completed: {task.goal}",
-                "task_id": task.task_id,
-                "model": self.model
-            }
+            # Parse response into structured output
+            output = self._parse_response(response.choices[0].message.content, task)
+            output["status"] = "success"
+            output["task_id"] = task.task_id
+            output["model"] = self.model
             
         except Exception as e:
             logger.error(f"Error executing task: {e}")
@@ -111,6 +128,11 @@ class OpenAIAdapter:
                 "status": "failed",
                 "error": str(e)
             }
+            self._track_action(
+                ActionType.DECISION,
+                success=False,
+                input_data={"error": str(e)}
+            )
         
         finally:
             self.trajectory.complete()
@@ -122,6 +144,41 @@ class OpenAIAdapter:
             "execution_time": execution_time,
             "trajectory": self.trajectory
         }
+    
+    def _build_system_prompt(self, task: TaskDefinition) -> str:
+        """Build system prompt from task definition"""
+        prompt = f"{self.system_message}\n\nYour goal: {task.goal}\n\n"
+        
+        if task.constraints:
+            prompt += "Constraints:\n"
+            for constraint in task.constraints:
+                prompt += f"- {constraint.get('name', 'constraint')}: {constraint}\n"
+        
+        prompt += "\nProvide your response in JSON format"
+        if task.expected_output_schema.get('required'):
+            prompt += f" with the following required fields: {', '.join(task.expected_output_schema['required'])}"
+        prompt += "."
+        
+        return prompt
+    
+    def _parse_response(self, response: str, task: TaskDefinition) -> Dict[str, Any]:
+        """Parse LLM response into structured output"""
+        import json
+        # Try to extract JSON from response
+        try:
+            # Look for JSON in markdown code blocks
+            if "```json" in response:
+                json_str = response.split("```json")[1].split("```")[0].strip()
+                return json.loads(json_str)
+            elif "```" in response:
+                json_str = response.split("```")[1].split("```")[0].strip()
+                return json.loads(json_str)
+            else:
+                # Try parsing entire response as JSON
+                return json.loads(response)
+        except Exception:
+            # Fallback: return raw response
+            return {"result": response}
     
     def _track_action(
         self,

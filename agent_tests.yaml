@@ -1,0 +1,22 @@
+name: My Agent Tests
+description: Sample test suite for my AI agent
+tests:
+- task_id: sample_task_1
+  goal: Answer a simple question
+  constraints:
+  - name: response_length
+    type: value_in_range
+    min_value: 10
+    max_value: 500
+  expected_output_schema:
+    required:
+    - answer
+  timeout_seconds: 30
+validators:
+  task:
+    strict_mode: false
+  trajectory:
+    max_actions: 20
+    allow_backtracking: true
+  memory:
+    min_retention_score: 0.7

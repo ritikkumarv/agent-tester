@@ -124,14 +124,19 @@ class MemoryValidator:
             return 1.0
 
         # Check how many are in memory
-        retained = sum(
-            1
-            for fact in key_facts
-            if any(
-                fact.lower() in str(entry.value).lower()
-                for entry in memory.entries.values()
-            )
-        )
+        # Use fuzzy matching - check if key words from facts appear in memory values
+        retained = 0
+        for fact in key_facts:
+            fact_lower = fact.lower()
+            # Extract key words from fact (names, numbers, important terms)
+            fact_words = [w for w in fact_lower.split() if len(w) > 3 or w.isdigit()]
+            
+            # Check if any significant word from the fact appears in memory
+            for entry in memory.entries.values():
+                value_str = str(entry.value).lower()
+                if any(word in value_str or value_str in fact_lower for word in fact_words):
+                    retained += 1
+                    break
 
         return retained / len(key_facts)
 
@@ -152,7 +157,7 @@ class MemoryValidator:
 
     def _check_consistency(self, memory: AgentMemory) -> float:
         """Check for contradictions in memory"""
-        # Simplified: check for duplicate keys with different values
+        # Simplified: check for actual duplicate keys or obvious contradictions
         contradictions = 0
         total_checks = 0
 
@@ -161,14 +166,14 @@ class MemoryValidator:
         for i, entry1 in enumerate(entries_list):
             for entry2 in entries_list[i + 1 :]:
                 total_checks += 1
-                # Check if same key prefix but different values
+                # Check if exact same key with different values
                 if (
-                    entry1.key.split("_")[0] == entry2.key.split("_")[0]
+                    entry1.key == entry2.key
                     and entry1.value != entry2.value
                 ):
-                    # Could be legitimate (e.g., updates) or contradiction
-                    # Check timestamps - if close together, might be contradiction
-                    if abs(entry1.timestamp - entry2.timestamp) < 60:
+                    # Same key, different values could be legitimate updates
+                    # Check timestamps - if very close together, might be contradiction
+                    if abs(entry1.timestamp - entry2.timestamp) < 5:
                         contradictions += 1
 
         if total_checks == 0:

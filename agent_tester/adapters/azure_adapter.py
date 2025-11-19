@@ -83,32 +83,79 @@ class AzureAIFoundryAdapter:
         start_time = time.time()
         
         try:
-            # TODO: Implement actual Azure AI Foundry execution
-            # This is a placeholder showing the expected flow
-            
-            # Step 1: Create/get agent
-            self._track_action(
-                ActionType.TOOL_CALL,
-                tool_name="create_agent",
-                input_data={"instructions": self.agent_instructions},
-                output_data={"agent_id": self.agent_id},
-                duration_ms=50
-            )
-            
-            # Step 2: Execute task
-            self._track_action(
-                ActionType.LLM_CALL,
-                input_data={"task": task.goal},
-                output_data={"response": "Task executed"},
-                duration_ms=1000
-            )
-            
-            # Generate output
-            output = {
-                "status": "success",
-                "result": f"Completed: {task.goal}",
-                "task_id": task.task_id
-            }
+            # Try to use Azure AI Foundry if available
+            try:
+                from azure.ai.client import AIProjectClient
+                from azure.identity import DefaultAzureCredential
+                
+                # Initialize Azure client
+                action_start = time.time()
+                credential = DefaultAzureCredential()
+                client = AIProjectClient.from_connection_string(
+                    conn_str=self.project_endpoint,
+                    credential=credential
+                )
+                
+                self._track_action(
+                    ActionType.TOOL_CALL,
+                    tool_name="create_client",
+                    input_data={"endpoint": self.project_endpoint},
+                    output_data={"client_id": self.agent_id},
+                    duration_ms=(time.time() - action_start) * 1000
+                )
+                
+                # Execute task with Azure AI
+                action_start = time.time()
+                # Build messages for Azure AI
+                messages = [
+                    {"role": "system", "content": self.agent_instructions},
+                    {"role": "user", "content": task.goal}
+                ]
+                
+                # Call Azure AI model
+                response = client.chat.completions.create(
+                    model=self.model_deployment,
+                    messages=messages,
+                    temperature=0.7
+                )
+                
+                self._track_action(
+                    ActionType.LLM_CALL,
+                    input_data={"task": task.goal, "model": self.model_deployment},
+                    output_data={"response": response.choices[0].message.content},
+                    duration_ms=(time.time() - action_start) * 1000
+                )
+                
+                # Parse response
+                output = self._parse_response(response.choices[0].message.content, task)
+                output["status"] = "success"
+                output["task_id"] = task.task_id
+                
+            except ImportError:
+                # Fallback to mock implementation if Azure SDK not available
+                logger.warning("Azure AI SDK not installed. Using mock implementation.")
+                
+                self._track_action(
+                    ActionType.TOOL_CALL,
+                    tool_name="create_agent",
+                    input_data={"instructions": self.agent_instructions},
+                    output_data={"agent_id": self.agent_id},
+                    duration_ms=50
+                )
+                
+                self._track_action(
+                    ActionType.LLM_CALL,
+                    input_data={"task": task.goal},
+                    output_data={"response": "Task executed (mock)"},
+                    duration_ms=1000
+                )
+                
+                output = {
+                    "status": "success",
+                    "result": f"Completed: {task.goal}",
+                    "task_id": task.task_id,
+                    "note": "Mock implementation - Azure AI SDK not installed"
+                }
             
         except Exception as e:
             logger.error(f"Error executing task: {e}")
@@ -116,6 +163,11 @@ class AzureAIFoundryAdapter:
                 "status": "failed",
                 "error": str(e)
             }
+            self._track_action(
+                ActionType.DECISION,
+                success=False,
+                input_data={"error": str(e)}
+            )
         
         finally:
             self.trajectory.complete()
@@ -127,6 +179,25 @@ class AzureAIFoundryAdapter:
             "execution_time": execution_time,
             "trajectory": self.trajectory
         }
+    
+    def _parse_response(self, response: str, task: TaskDefinition) -> Dict[str, Any]:
+        """Parse LLM response into structured output"""
+        import json
+        # Try to extract JSON from response
+        try:
+            # Look for JSON in markdown code blocks
+            if "```json" in response:
+                json_str = response.split("```json")[1].split("```")[0].strip()
+                return json.loads(json_str)
+            elif "```" in response:
+                json_str = response.split("```")[1].split("```")[0].strip()
+                return json.loads(json_str)
+            else:
+                # Try parsing entire response as JSON
+                return json.loads(response)
+        except Exception:
+            # Fallback: return raw response
+            return {"result": response}
     
     def _track_action(
         self,

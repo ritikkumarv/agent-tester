@@ -184,18 +184,23 @@ class TrajectoryValidator:
 
     def _estimate_optimal_actions(self, trajectory: Trajectory) -> int:
         """Estimate minimum actions needed"""
-        # Simplified heuristic: count unique tool calls + necessary LLM calls
+        # Simplified heuristic: count unique tool calls + necessary LLM calls + essential memory operations
         unique_tools = set()
         llm_calls = 0
+        memory_ops = 0
 
         for action in trajectory.actions:
             if action.action_type == ActionType.TOOL_CALL and action.tool_name:
                 unique_tools.add(action.tool_name)
             elif action.action_type == ActionType.LLM_CALL:
                 llm_calls += 1
+            elif action.action_type in (ActionType.MEMORY_READ, ActionType.MEMORY_WRITE):
+                memory_ops += 1
 
-        # Estimate: unique tools + at least 1 LLM call
-        return len(unique_tools) + max(1, llm_calls // 2)
+        # Estimate: unique tools + at least 1 LLM call + some memory operations
+        # Be more lenient - typical workflow includes context reading and result storage
+        essential_memory = min(memory_ops, 2) if memory_ops > 0 else 0
+        return len(unique_tools) + max(1, llm_calls) + essential_memory
 
     def visualize_trajectory(self, trajectory: Trajectory) -> str:
         """Generate ASCII visualization of trajectory"""

@@ -27,6 +27,10 @@ custom_report.html
 *.cover
 .cache
 
+# Generated test configs (keep examples)
+agent_tests.yaml
+comprehensive_tests.yaml
+
 # Environment Variables - NEVER COMMIT THESE
 .env
 .env.local

@@ -1,8 +1,11 @@
 """
-Cloud Adapter Example
-=====================
+Cloud Adapter
+=============
 
-This example shows how to create an adapter for generic cloud-based AI agents.
+Adapter for generic cloud-based AI agents.
+
+This adapter provides a template for integrating with cloud-based AI services
+such as Google Cloud AI, AWS Bedrock, or custom cloud deployments.
 
 Usage:
 ------
@@ -16,6 +19,7 @@ python -m agent_tester.adapters.cloud_adapter
 import os
 import time
 import logging
+import json
 from typing import Dict, Any, Optional
 
 from agent_tester.models import (
@@ -180,14 +184,16 @@ class CloudAdapter:
         
         prompt += "\nProvide your response in JSON format"
         if task.expected_output_schema.get('required'):
-            prompt += f" with the following required fields: {', '.join(task.expected_output_schema['required'])}"
+            required_fields = task.expected_output_schema['required']
+            # Ensure all required fields are strings
+            if all(isinstance(field, str) for field in required_fields):
+                prompt += f" with the following required fields: {', '.join(required_fields)}"
         prompt += "."
         
         return prompt
     
     def _parse_response(self, response: str, task: TaskDefinition) -> Dict[str, Any]:
         """Parse API response into structured output"""
-        import json
         # Try to extract JSON from response
         try:
             # Look for JSON in markdown code blocks

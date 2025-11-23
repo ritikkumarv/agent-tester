@@ -8,6 +8,7 @@ with the Agent Tester framework.
 
 import pytest
 import os
+import json
 from agent_tester.adapters.cloud_adapter import CloudAdapter
 from agent_tester.models import TaskDefinition
 from agent_tester import TaskValidator
@@ -144,8 +145,6 @@ def test_build_system_prompt(cloud_adapter):
 
 def test_parse_response_json(cloud_adapter, sample_task):
     """Test parsing JSON response"""
-    import json
-    
     # Test JSON in code block
     response1 = '```json\n{"result": "success", "data": "value"}\n```'
     parsed1 = cloud_adapter._parse_response(response1, sample_task)

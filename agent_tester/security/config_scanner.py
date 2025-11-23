@@ -6,9 +6,13 @@ Analyzes configuration files for security misconfigurations and exposed secrets.
 
 import os
 import re
+import logging
 from typing import List, Dict, Any
 
 from .security_reporter import SecurityIssue, Severity, IssueCategory
+
+# Set up logger
+logger = logging.getLogger(__name__)
 
 
 class ConfigurationScanner:
@@ -67,7 +71,7 @@ class ConfigurationScanner:
                     break  # Only report once per file
         
         except Exception as e:
-            pass
+            logger.warning(f"Error scanning env file {file_path}: {str(e)}")
         
         return issues
     
@@ -141,7 +145,7 @@ class ConfigurationScanner:
                     issues.append(issue)
         
         except Exception as e:
-            pass
+            logger.warning(f"Error scanning Dockerfile {file_path}: {str(e)}")
         
         return issues
     
@@ -192,7 +196,7 @@ class ConfigurationScanner:
                     issues.append(issue)
         
         except Exception as e:
-            pass
+            logger.warning(f"Error scanning YAML config {file_path}: {str(e)}")
         
         return issues
     
@@ -248,7 +252,7 @@ class ConfigurationScanner:
                 issues.append(issue)
         
         except Exception as e:
-            pass
+            logger.warning(f"Error scanning GitHub workflow {file_path}: {str(e)}")
         
         return issues
     

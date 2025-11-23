@@ -7,10 +7,14 @@ Performs source code analysis to detect security vulnerabilities and insecure pa
 import os
 import re
 import ast
+import logging
 from typing import List, Dict, Any, Optional, Set
 from pathlib import Path
 
 from .security_reporter import SecurityIssue, Severity, IssueCategory
+
+# Set up logger
+logger = logging.getLogger(__name__)
 
 
 class SASTScanner:
@@ -113,8 +117,8 @@ class SASTScanner:
             issues.extend(self._check_cryptography(file_path, content, lines))
             
         except Exception as e:
-            # Log error but continue scanning
-            pass
+            # Log error but continue scanning other files
+            logger.warning(f"Error scanning file {file_path}: {str(e)}")
         
         return issues
     

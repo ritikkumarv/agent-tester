@@ -7,10 +7,14 @@ Analyzes third-party dependencies for known vulnerabilities (CVEs).
 import os
 import re
 import json
+import logging
 from typing import List, Dict, Any, Optional, Tuple
 from pathlib import Path
 
 from .security_reporter import SecurityIssue, Severity, IssueCategory
+
+# Set up logger
+logger = logging.getLogger(__name__)
 
 
 class DependencyScanner:
@@ -136,7 +140,8 @@ class DependencyScanner:
                         issues.extend(vuln_issues)
         
         except Exception as e:
-            pass
+            # Log error but continue with other files
+            logger.warning(f"Error scanning requirements file {file_path}: {str(e)}")
         
         return issues
     

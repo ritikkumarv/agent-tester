@@ -365,6 +365,197 @@ def examples():
     console.print(examples_text)
 
 
+@cli.group()
+def security():
+    """🛡️  Security scanning and vulnerability detection commands"""
+    pass
+
+
+@security.command(name="scan")
+@click.option(
+    "--type",
+    "-t",
+    type=click.Choice(["full", "sast", "dependency", "secret", "config"]),
+    default="full",
+    help="Type of security scan to run",
+)
+@click.option(
+    "--path",
+    "-p",
+    type=click.Path(exists=True),
+    default=".",
+    help="Path to repository/directory to scan",
+)
+@click.option(
+    "--format",
+    "-f",
+    type=click.Choice(["json", "html", "markdown", "text"]),
+    default="html",
+    help="Output report format",
+)
+@click.option(
+    "--output",
+    "-o",
+    type=str,
+    default="security_report",
+    help="Output file path (without extension)",
+)
+def security_scan(type: str, path: str, format: str, output: str):
+    """Run security scans on the codebase"""
+    from agent_tester.security import SecurityOrchestrator
+
+    console.print(
+        Panel.fit(
+            "🛡️  [bold blue]Security Scanner[/bold blue]\n"
+            f"Running {type} security scan...",
+            border_style="blue",
+        )
+    )
+
+    orchestrator = SecurityOrchestrator(repository_path=path)
+
+    # Run appropriate scan
+    with console.status(f"[bold green]Scanning for vulnerabilities..."):
+        if type == "full":
+            report = orchestrator.run_full_scan()
+        elif type == "sast":
+            report = orchestrator.run_sast_scan()
+        elif type == "dependency":
+            report = orchestrator.run_dependency_scan()
+        elif type == "secret":
+            report = orchestrator.run_secret_scan()
+        elif type == "config":
+            report = orchestrator.run_config_scan()
+
+    # Display summary
+    console.print("\n" + "=" * 60)
+    console.print("[bold]Security Scan Results[/bold]")
+    console.print("=" * 60 + "\n")
+
+    # Create summary table
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("Severity", style="cyan")
+    table.add_column("Count", justify="right")
+
+    severity_colors = {
+        "critical": "red",
+        "high": "orange1",
+        "medium": "yellow",
+        "low": "blue",
+        "info": "white",
+    }
+
+    for severity, count in report.summary.get("by_severity", {}).items():
+        color = severity_colors.get(severity, "white")
+        table.add_row(
+            f"[{color}]{severity.upper()}[/{color}]",
+            f"[{color}]{count}[/{color}]",
+        )
+
+    console.print(table)
+
+    console.print(f"\n[bold]Statistics:[/bold]")
+    console.print(f"  Total Issues: {report.summary.get('total_issues', 0)}")
+    console.print(f"  Exploitable: {report.summary.get('exploitable_count', 0)}")
+    console.print(f"  Files Scanned: {report.files_scanned}")
+    console.print(f"  Dependencies Checked: {report.dependencies_checked}")
+    console.print(f"  Scan Duration: {report.scan_duration_seconds:.2f}s")
+
+    # Generate report file
+    report_file = orchestrator.generate_report_file(report, format, output)
+    console.print(f"\n📄 Report generated: [cyan]{report_file}[/cyan]")
+
+    # Show critical issues
+    critical_issues = report.get_critical_issues()
+    if critical_issues:
+        console.print(
+            f"\n[red bold]⚠️  {len(critical_issues)} CRITICAL issues found![/red bold]"
+        )
+        console.print("[red]Please review and fix immediately.[/red]")
+        sys.exit(1)
+    else:
+        console.print("\n[green]✅ No critical issues found![/green]")
+        sys.exit(0)
+
+
+@security.command(name="report")
+@click.option(
+    "--path",
+    "-p",
+    type=click.Path(exists=True),
+    default=".",
+    help="Path to repository",
+)
+def security_report(path: str):
+    """Generate a quick security summary"""
+    from agent_tester.security import SecurityOrchestrator
+
+    console.print("🛡️  Generating security summary...\n")
+
+    orchestrator = SecurityOrchestrator(repository_path=path)
+
+    with console.status("[bold green]Scanning..."):
+        report = orchestrator.run_full_scan()
+
+    # Show top issues
+    critical = report.get_critical_issues()
+    if critical:
+        console.print(f"\n[red bold]🔴 Critical Issues ({len(critical)}):[/red bold]")
+        for i, issue in enumerate(critical[:5], 1):
+            console.print(f"{i}. {issue.title}")
+            if issue.file_path:
+                console.print(f"   Location: {issue.file_path}:{issue.line_number or ''}")
+
+    # Recommendations
+    if report.recommendations:
+        console.print(f"\n[bold]📋 Top Recommendations:[/bold]")
+        for i, rec in enumerate(report.recommendations[:3], 1):
+            console.print(f"{i}. {rec}")
+
+
+@security.command(name="check-deps")
+@click.option(
+    "--path",
+    "-p",
+    type=click.Path(exists=True),
+    default=".",
+    help="Path to repository",
+)
+def check_dependencies(path: str):
+    """Check dependencies for known vulnerabilities"""
+    from agent_tester.security import DependencyScanner
+
+    console.print("📦 Checking dependencies for vulnerabilities...\n")
+
+    scanner = DependencyScanner()
+
+    # Scan requirements
+    req_path = Path(path) / "requirements.txt"
+    if req_path.exists():
+        issues = scanner.scan_requirements(str(req_path))
+
+        if issues:
+            console.print(f"[yellow]Found {len(issues)} dependency issues:[/yellow]\n")
+            for issue in issues:
+                severity_color = {
+                    "critical": "red",
+                    "high": "orange1",
+                    "medium": "yellow",
+                    "low": "blue",
+                }.get(issue.severity.value, "white")
+
+                console.print(
+                    f"[{severity_color}]{issue.severity.value.upper()}[/{severity_color}] - {issue.title}"
+                )
+                console.print(f"  {issue.description}")
+                if issue.suggested_fix:
+                    console.print(f"  Fix: {issue.suggested_fix.description}\n")
+        else:
+            console.print("[green]✅ No dependency vulnerabilities found![/green]")
+    else:
+        console.print("[yellow]No requirements.txt found[/yellow]")
+
+
 @cli.command()
 def version():
     """Show version information"""

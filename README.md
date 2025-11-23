@@ -16,6 +16,7 @@ Production-grade testing framework for AI agents. Validates Task completion, Tra
 - **Task Validation**: Goal achievement, constraint satisfaction, output schema compliance
 - **Trajectory Validation**: Action efficiency, loop detection, path optimization
 - **Memory Validation**: Context retention, consistency checking, relevance scoring
+- **🛡️ Security Scanning**: Built-in SAST, dependency scanning, secret detection, and configuration security checks
 - **Multi-Platform**: Azure AI Foundry, OpenAI, GitHub Models, LangChain, custom agents
 - **Enterprise-Ready**: Security-first design, comprehensive logging, CI/CD integration
 - **Extensible**: Adapter pattern for custom platforms
@@ -29,6 +30,7 @@ Testing AI agents shouldn't be harder than testing APIs. Agent Tester brings the
 - 🎨 **Rich Output** - Beautiful, readable test results  
 - 🔌 **Multi-Platform** - Works with Azure, OpenAI, LangChain, and more
 - 🚀 **Production-Ready** - Enterprise-grade validation and reporting
+- 🛡️ **Built-in Security** - Automated vulnerability scanning and security best practices
 
 ## 🚀 Quick Start
 
@@ -100,6 +102,13 @@ agent-tester run -c my_tests.yaml -o custom_report.html
 
 # Quick validation
 agent-tester validate task1 --goal "Summarize this document"
+
+# Security Scanning
+agent-tester security scan                    # Run full security scan
+agent-tester security scan --type sast        # Run only SAST
+agent-tester security scan --type dependency  # Check dependencies
+agent-tester security report                  # Quick security summary
+agent-tester security check-deps              # Check for vulnerable deps
 
 # See all commands
 agent-tester --help
@@ -189,16 +198,59 @@ agent-tester/
 │   │   ├── task_validator.py
 │   │   ├── trajectory_validator.py
 │   │   └── memory_validator.py
-│   └── adapters/                # Platform adapters
-│       ├── azure_adapter.py     # Azure AI Foundry
-│       └── openai_adapter.py    # OpenAI
+│   ├── adapters/                # Platform adapters
+│   │   ├── azure_adapter.py     # Azure AI Foundry
+│   │   └── openai_adapter.py    # OpenAI
+│   └── security/                # Security scanning (NEW!)
+│       ├── sast_scanner.py      # Static security analysis
+│       ├── dependency_scanner.py # Dependency vulnerabilities
+│       ├── secret_scanner.py    # Secret detection
+│       ├── config_scanner.py    # Configuration security
+│       └── security_orchestrator.py # Scan coordination
 ├── examples/                    # Usage examples
 │   └── simple_example.py
 ├── tests/                       # Test files
+│   └── security/                # Security module tests
+├── .github/workflows/           # CI/CD workflows
+│   └── security-scan.yml        # Automated security scanning
 ├── pyproject.toml               # Package configuration
 ├── QUICKSTART.md                # Getting started guide
 └── README.md                    # This file
 ```
+
+## 🛡️ Security Features
+
+Agent Tester includes comprehensive security scanning capabilities:
+
+### Built-in Security Scanners
+
+- **SAST (Static Application Security Testing)**: Detects SQL injection, XSS, command injection, path traversal, eval usage, weak crypto, and more
+- **Dependency Scanning**: Identifies known CVEs in your dependencies
+- **Secret Detection**: Finds exposed API keys, passwords, tokens (AWS, GitHub, OpenAI, etc.)
+- **Configuration Security**: Checks for insecure defaults and misconfigurations
+
+### Quick Security Scan
+
+```bash
+# Run full security scan
+agent-tester security scan
+
+# Generate HTML report
+agent-tester security scan --format html --output security_report
+
+# Check only dependencies
+agent-tester security check-deps
+```
+
+### Continuous Security Monitoring
+
+The included GitHub Actions workflow automatically:
+- Scans every push and PR
+- Posts security summaries on PRs
+- Runs daily security audits
+- Blocks merges with critical vulnerabilities
+
+See [Security Documentation](agent_tester/security/README.md) for detailed information.
 
 ## Testing
 

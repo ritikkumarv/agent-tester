@@ -10,11 +10,14 @@ Scans project dependencies for known vulnerabilities:
 import re
 import json
 import subprocess
+import logging
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 import hashlib
 
 from .models import SecurityIssue, SecuritySeverity, SecurityCategory, VulnerabilityFix
+
+logger = logging.getLogger(__name__)
 
 
 class DependencyScanner:
@@ -84,7 +87,7 @@ class DependencyScanner:
                 self.dependencies_checked += 1
 
         except Exception as e:
-            pass
+            logger.warning(f"Error scanning requirements file {requirements_path}: {e}")
 
         return self.issues
 

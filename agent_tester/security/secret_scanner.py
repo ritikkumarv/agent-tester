@@ -6,11 +6,14 @@ Detects exposed secrets, API keys, tokens, and credentials in code and configura
 
 import re
 import os
+import logging
 from typing import List, Dict, Pattern
 from pathlib import Path
 import hashlib
 
 from .models import SecurityIssue, SecuritySeverity, SecurityCategory, VulnerabilityFix
+
+logger = logging.getLogger(__name__)
 
 
 class SecretScanner:
@@ -189,8 +192,8 @@ class SecretScanner:
                         )
                         self.issues.append(issue)
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Error scanning file {file_path}: {e}")
 
         return self.issues
 

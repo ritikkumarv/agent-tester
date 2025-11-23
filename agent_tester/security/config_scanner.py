@@ -6,11 +6,14 @@ Checks for insecure configurations and defaults
 
 import os
 import re
+import logging
 from typing import List, Dict
 from pathlib import Path
 import hashlib
 
 from .models import SecurityIssue, SecuritySeverity, SecurityCategory, VulnerabilityFix
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigurationScanner:
@@ -159,8 +162,8 @@ class ConfigurationScanner:
                             )
                             self.issues.append(issue)
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Error scanning configuration file {file_path}: {e}")
 
         return self.issues
 

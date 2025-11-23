@@ -53,7 +53,7 @@ class SecurityReporter:
         """Generate JSON report"""
         file_path = f"{output_path}.json"
 
-        with open(file_path, "w") as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(report.model_dump(), f, indent=2, default=str)
 
         return file_path
@@ -126,7 +126,7 @@ class SecurityReporter:
         lines.append("End of Report")
         lines.append("=" * 80)
 
-        with open(file_path, "w") as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write("\n".join(lines))
 
         return file_path
@@ -227,7 +227,7 @@ class SecurityReporter:
                 lines.append(f"- {rec}")
             lines.append("")
 
-        with open(file_path, "w") as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write("\n".join(lines))
 
         return file_path
@@ -398,7 +398,7 @@ class SecurityReporter:
 </html>
 """
 
-        with open(file_path, "w") as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(html)
 
         return file_path

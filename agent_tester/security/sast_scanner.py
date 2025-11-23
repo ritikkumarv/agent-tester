@@ -15,11 +15,14 @@ Detects common security vulnerabilities in source code:
 import re
 import os
 import ast
+import logging
 from typing import List, Dict, Any, Optional, Set
 from pathlib import Path
 import hashlib
 
 from .models import SecurityIssue, SecuritySeverity, SecurityCategory, VulnerabilityFix
+
+logger = logging.getLogger(__name__)
 
 
 class SASTScanner:
@@ -164,7 +167,8 @@ class SASTScanner:
             return self.issues
 
         except Exception as e:
-            # Log error but continue scanning
+            # Log error but continue scanning other files
+            logger.warning(f"Error scanning file {file_path}: {e}")
             return self.issues
 
     def _get_scannable_files(self, path: Path) -> List[Path]:

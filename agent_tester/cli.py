@@ -381,6 +381,127 @@ def version():
     )
 
 
+@cli.command()
+@click.option(
+    "--path",
+    "-p",
+    type=click.Path(exists=True),
+    default=".",
+    help="Path to repository or directory to scan (default: current directory)",
+)
+@click.option(
+    "--output",
+    "-o",
+    type=click.Path(),
+    help="Output file path for security report",
+)
+@click.option(
+    "--format",
+    "-f",
+    type=click.Choice(["markdown", "json"], case_sensitive=False),
+    default="markdown",
+    help="Report format (default: markdown)",
+)
+@click.option(
+    "--severity",
+    "-s",
+    type=click.Choice(["critical", "high", "medium", "low", "all"], case_sensitive=False),
+    default="all",
+    help="Minimum severity to report (default: all)",
+)
+def security(path: str, output: Optional[str], format: str, severity: str):
+    """
+    🔒 Run security scan on repository
+    
+    Performs comprehensive security analysis including:
+    - Static Application Security Testing (SAST)
+    - Dependency vulnerability scanning
+    - Configuration security checks
+    - Secret detection
+    """
+    from agent_tester.security import SecurityValidator
+    
+    console.print(Panel.fit(
+        "[bold blue]Security Scanner[/bold blue]\n"
+        "Cybersecurity & Secure-Code Contributor",
+        border_style="blue",
+    ))
+    
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task("Running security scans...", total=None)
+        
+        validator = SecurityValidator()
+        report = validator.validate_repository(path)
+        
+        progress.update(task, description="[green]✓[/green] Security scan complete")
+    
+    # Display summary
+    summary = report.get_summary()
+    
+    summary_table = Table(title="Security Scan Summary", show_header=True, header_style="bold cyan")
+    summary_table.add_column("Metric", style="cyan")
+    summary_table.add_column("Value", justify="right")
+    
+    summary_table.add_row("Files Scanned", str(summary["files_scanned"]))
+    summary_table.add_row("Dependencies Checked", str(summary["dependencies_checked"]))
+    summary_table.add_row("Scan Duration", f"{summary['scan_duration']:.2f}s")
+    summary_table.add_row("", "")  # Separator
+    summary_table.add_row("[bold red]Critical Issues[/bold red]", f"[bold red]{summary['critical']}[/bold red]")
+    summary_table.add_row("[bold yellow]High Issues[/bold yellow]", f"[bold yellow]{summary['high']}[/bold yellow]")
+    summary_table.add_row("Medium Issues", str(summary["medium"]))
+    summary_table.add_row("Low Issues", str(summary["low"]))
+    summary_table.add_row("Info", str(summary["info"]))
+    summary_table.add_row("[bold]Total Issues[/bold]", f"[bold]{summary['total_issues']}[/bold]")
+    
+    console.print(summary_table)
+    
+    # Filter by severity if needed
+    if severity != "all":
+        severity_levels = {
+            "critical": ["critical"],
+            "high": ["critical", "high"],
+            "medium": ["critical", "high", "medium"],
+            "low": ["critical", "high", "medium", "low"],
+        }
+        console.print(f"\n[dim]Filtering to show {severity.upper()} and above...[/dim]")
+    
+    # Display issues if any
+    if summary["total_issues"] > 0:
+        console.print("\n[bold yellow]⚠️  Security issues found![/bold yellow]")
+        
+        # Show critical issues
+        if report.critical_issues:
+            console.print("\n[bold red]🔴 CRITICAL ISSUES:[/bold red]")
+            for issue in report.critical_issues[:5]:  # Show first 5
+                console.print(f"  • {issue.title} ({issue.file_path}:{issue.line_number or '?'})")
+        
+        # Show high issues
+        if report.high_issues:
+            console.print("\n[bold yellow]🟠 HIGH SEVERITY ISSUES:[/bold yellow]")
+            for issue in report.high_issues[:5]:  # Show first 5
+                console.print(f"  • {issue.title} ({issue.file_path}:{issue.line_number or '?'})")
+    else:
+        console.print("\n[bold green]✅ No security issues found![/bold green]")
+    
+    # Export report
+    if output:
+        report_content = validator.export_report(report, format=format, output_file=output)
+        console.print(f"\n[green]✓[/green] Report saved to: {output}")
+    else:
+        # Generate default filename
+        default_output = f"security_report_{report.report_id}.{format.replace('markdown', 'md')}"
+        validator.export_report(report, format=format, output_file=default_output)
+        console.print(f"\n[green]✓[/green] Report saved to: {default_output}")
+    
+    # Exit with error code if critical or high issues found
+    if report.critical_issues or report.high_issues:
+        sys.exit(1)
+
+
 def main():
     """Main entry point for the CLI"""
     try:

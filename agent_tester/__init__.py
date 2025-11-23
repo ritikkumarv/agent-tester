@@ -33,6 +33,19 @@ from agent_tester.validators.memory_validator import MemoryValidator, MemoryVali
 
 from agent_tester.suite import AgentTestSuite
 
+# Security module
+from agent_tester.security import (
+    SecurityValidator,
+    SecurityReporter,
+    SecurityIssue,
+    Severity,
+    IssueCategory,
+    SASTScanner,
+    DependencyScanner,
+    ConfigurationScanner,
+    SecurityKnowledgeBase,
+)
+
 __all__ = [
     # Core models
     "TaskDefinition",
@@ -52,6 +65,16 @@ __all__ = [
     "MemoryValidationResult",
     # Test suite
     "AgentTestSuite",
+    # Security
+    "SecurityValidator",
+    "SecurityReporter",
+    "SecurityIssue",
+    "Severity",
+    "IssueCategory",
+    "SASTScanner",
+    "DependencyScanner",
+    "ConfigurationScanner",
+    "SecurityKnowledgeBase",
     # Version
     "__version__",
 ]

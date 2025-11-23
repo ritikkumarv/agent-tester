@@ -16,6 +16,7 @@ Production-grade testing framework for AI agents. Validates Task completion, Tra
 - **Task Validation**: Goal achievement, constraint satisfaction, output schema compliance
 - **Trajectory Validation**: Action efficiency, loop detection, path optimization
 - **Memory Validation**: Context retention, consistency checking, relevance scoring
+- **🔒 Security Analysis**: SAST scanning, dependency vulnerabilities, configuration security
 - **Multi-Platform**: Azure AI Foundry, OpenAI, GitHub Models, LangChain, custom agents
 - **Enterprise-Ready**: Security-first design, comprehensive logging, CI/CD integration
 - **Extensible**: Adapter pattern for custom platforms
@@ -101,11 +102,33 @@ agent-tester run -c my_tests.yaml -o custom_report.html
 # Quick validation
 agent-tester validate task1 --goal "Summarize this document"
 
+# Run security scan
+agent-tester security
+
+# Run security scan with custom output
+agent-tester security --format json --output security_report.json
+
 # See all commands
 agent-tester --help
 
 # View examples
 agent-tester examples
+```
+
+### Security Scanning
+
+```bash
+# Scan current directory
+agent-tester security
+
+# Scan specific path
+agent-tester security --path /path/to/project
+
+# Show only critical/high severity issues
+agent-tester security --severity high
+
+# Generate JSON report
+agent-tester security --format json --output report.json
 ```
 
 ### Python API (For Programmatic Testing)
@@ -142,6 +165,32 @@ print(f"Goal Achieved: {validation.goal_achieved}")
 print(f"Constraints Met: {all(validation.constraints_met.values())}")
 ```
 
+### Security API
+
+```python
+from agent_tester.security import SecurityValidator
+
+# Run comprehensive security scan
+validator = SecurityValidator()
+report = validator.validate_repository("./my-project")
+
+# Get summary
+summary = report.get_summary()
+print(f"Total Issues: {summary['total_issues']}")
+print(f"Critical: {summary['critical']}")
+print(f"High: {summary['high']}")
+
+# Get critical issues
+for issue in report.critical_issues:
+    print(f"🔴 {issue.title}")
+    print(f"   File: {issue.file_path}:{issue.line_number}")
+    print(f"   Fix: {issue.recommendation}")
+
+# Export reports
+validator.export_report(report, format="markdown", output_file="security_report.md")
+validator.export_report(report, format="json", output_file="security_report.json")
+```
+
 ### Test Configuration Format (YAML)
 
 ```yaml
@@ -176,6 +225,45 @@ validators:
     min_retention_score: 0.7
 ```
 
+## 🔒 Security Features
+
+Agent Tester includes a comprehensive **Cybersecurity & Secure-Code Contributor** module that provides:
+
+### Security Scanners
+
+1. **Static Application Security Testing (SAST)**
+   - Detects code injection vulnerabilities (eval, exec, compile)
+   - Identifies SQL and command injection patterns
+   - Finds hardcoded secrets and credentials
+   - Detects insecure deserialization and weak cryptography
+
+2. **Dependency Vulnerability Scanning**
+   - Scans requirements.txt and pyproject.toml
+   - Detects known CVEs in dependencies
+   - Identifies unpinned dependencies
+
+3. **Configuration Security Analysis**
+   - Scans .env files for exposed secrets
+   - Analyzes Dockerfile for security issues
+   - Checks GitHub Actions workflows for injection vulnerabilities
+   - Validates YAML configurations
+
+### Security Knowledge Base
+
+Integrated with industry standards:
+- **OWASP Top 10 2021** - Web application security risks
+- **SANS Top 25 CWE** - Most dangerous software weaknesses
+- **MITRE ATT&CK** - Adversary tactics and techniques
+
+### Security Reports
+
+- **5-tier severity system**: Critical, High, Medium, Low, Info
+- **Detailed remediation guidance** with code samples
+- **Multiple export formats**: Markdown, JSON
+- **CVE/CWE/OWASP references** for each issue
+
+**👉 [Read the Complete Security Documentation](SECURITY_MODULE.md)**
+
 ## Project Structure
 
 ```
@@ -189,14 +277,23 @@ agent-tester/
 │   │   ├── task_validator.py
 │   │   ├── trajectory_validator.py
 │   │   └── memory_validator.py
-│   └── adapters/                # Platform adapters
-│       ├── azure_adapter.py     # Azure AI Foundry
-│       └── openai_adapter.py    # OpenAI
+│   ├── adapters/                # Platform adapters
+│   │   ├── azure_adapter.py     # Azure AI Foundry
+│   │   └── openai_adapter.py    # OpenAI
+│   └── security/                # 🔒 Security module
+│       ├── sast_scanner.py      # Static code analysis
+│       ├── dependency_scanner.py # CVE scanning
+│       ├── config_scanner.py    # Configuration security
+│       ├── security_validator.py # Orchestrator
+│       ├── security_reporter.py # Report generation
+│       └── knowledge_base.py    # OWASP/SANS/MITRE
 ├── examples/                    # Usage examples
-│   └── simple_example.py
+│   ├── simple_example.py
+│   └── security_scan_example.py
 ├── tests/                       # Test files
 ├── pyproject.toml               # Package configuration
 ├── QUICKSTART.md                # Getting started guide
+├── SECURITY_MODULE.md           # Security documentation
 └── README.md                    # This file
 ```
 

@@ -121,6 +121,37 @@ This framework follows security best practices including:
 - Least privilege principle
 - Defense in depth
 
+## Built-in Security Scanner
+
+Agent Tester includes a comprehensive security module that helps you maintain security in your projects:
+
+### Automated Security Scanning
+
+Run security scans on your codebase:
+
+```bash
+# Scan current repository
+agent-tester security
+
+# Show only critical/high issues
+agent-tester security --severity high
+
+# Generate JSON report
+agent-tester security --format json --output report.json
+```
+
+### Security Features
+
+The security module provides:
+- **SAST (Static Application Security Testing)** - Detect code injection, SQL injection, hardcoded secrets
+- **Dependency Scanning** - Find CVEs in third-party packages
+- **Configuration Security** - Check for exposed secrets, Docker issues, CI/CD vulnerabilities
+- **Knowledge Base** - Integration with OWASP Top 10, SANS Top 25, MITRE ATT&CK
+
+**👉 [Read Security Module Documentation](SECURITY_MODULE.md)**
+
+**👉 [Read Cybersecurity Role Definition](CYBERSECURITY_ROLE.md)**
+
 ## Additional Resources
 
 - [OWASP Secure Coding Practices](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)

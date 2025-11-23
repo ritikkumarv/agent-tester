@@ -1,0 +1,92 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run security scan daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  security-scan:
+    name: Security Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+      
+      - name: Run Security Scan
+        id: security_scan
+        continue-on-error: true
+        run: |
+          agent-tester security --path . --format markdown --output security_report.md
+          echo "scan_completed=true" >> $GITHUB_OUTPUT
+      
+      - name: Upload Security Report
+        if: always() && steps.security_scan.outputs.scan_completed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: security_report.md
+          retention-days: 30
+      
+      - name: Check for Critical/High Issues
+        if: steps.security_scan.outcome == 'failure'
+        run: |
+          echo "::error::Security scan found critical or high severity issues!"
+          echo "Please review the security report artifact for details."
+          exit 1
+      
+      - name: Comment PR with Security Summary
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Read the security report if it exists
+            if (fs.existsSync('security_report.md')) {
+              const report = fs.readFileSync('security_report.md', 'utf8');
+              
+              // Extract summary section
+              const summaryMatch = report.match(/## Executive Summary([\s\S]*?)(?=##|$)/);
+              const summary = summaryMatch ? summaryMatch[0] : 'Security scan completed.';
+              
+              const comment = `## 🔒 Security Scan Results\n\n${summary}\n\n📄 Full report available in workflow artifacts.`;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+          comment-summary-in-pr: true

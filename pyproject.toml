@@ -113,5 +113,6 @@ markers = [
     "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
     "azure: marks tests requiring Azure credentials",
     "openai: marks tests requiring OpenAI API key",
+    "anthropic: marks tests requiring Anthropic API key",
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
 ]

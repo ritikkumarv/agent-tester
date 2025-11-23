@@ -34,7 +34,25 @@ python examples/openai_example.py
 - Fallback to mock adapter (if key not set)
 - Task validation with structured output
 
-### 3. Comprehensive Test Suite (`create_comprehensive_tests.py`)
+### 3. Anthropic (Claude) Example (`example_anthropic_agent.py`)
+Demonstrates how to test agents using the Anthropic adapter with Claude models.
+
+```bash
+# Set your API key
+export ANTHROPIC_API_KEY="your-api-key"
+
+# Run the example
+python examples/example_anthropic_agent.py
+```
+
+**What it demonstrates:**
+- Using the Anthropic adapter with Claude models
+- Task execution with Claude
+- Trajectory and memory validation
+- Structured output handling
+- Comparing different Claude models
+
+### 4. Comprehensive Test Suite (`create_comprehensive_tests.py`)
 Creates a sample test suite configuration file.
 
 ```bash
@@ -80,6 +98,11 @@ agent-tester --help
 ### OpenAI
 ```bash
 export OPENAI_API_KEY="your-openai-api-key"
+```
+
+### Anthropic (Claude)
+```bash
+export ANTHROPIC_API_KEY="your-anthropic-api-key"
 ```
 
 ### Azure AI Foundry

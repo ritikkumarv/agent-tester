@@ -56,9 +56,7 @@ class SASTScanner:
         "shell_injection": {
             "patterns": [
                 r"os\.system\s*\(",
-                r"subprocess\.call\s*\([^,]*shell\s*=\s*True",
-                r"subprocess\.run\s*\([^,]*shell\s*=\s*True",
-                r"subprocess\.Popen\s*\([^,]*shell\s*=\s*True",
+                r"shell\s*=\s*True",
             ],
             "severity": SecuritySeverity.CRITICAL,
             "category": SecurityCategory.COMMAND_INJECTION,

@@ -5,7 +5,7 @@ Generates comprehensive security reports in various formats
 """
 
 import json
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from pathlib import Path
 from datetime import datetime
 

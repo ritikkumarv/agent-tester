@@ -27,6 +27,11 @@ custom_report.html
 *.cover
 .cache
 
+# Security Reports - Generated files
+security_report.*
+security_scan_report.*
+pip-audit-report.json
+
 # Generated test configs (keep examples)
 agent_tests.yaml
 comprehensive_tests.yaml

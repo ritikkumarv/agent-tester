@@ -17,6 +17,7 @@ Production-grade testing framework for AI agents. Validates Task completion, Tra
 - **Trajectory Validation**: Action efficiency, loop detection, path optimization
 - **Memory Validation**: Context retention, consistency checking, relevance scoring
 - **🔒 Security Analysis**: SAST scanning, dependency vulnerabilities, configuration security
+- **🛡️ Security Scanning**: Built-in SAST, dependency scanning, secret detection, and configuration security checks
 - **Multi-Platform**: Azure AI Foundry, OpenAI, GitHub Models, LangChain, custom agents
 - **Enterprise-Ready**: Security-first design, comprehensive logging, CI/CD integration
 - **Extensible**: Adapter pattern for custom platforms
@@ -30,6 +31,7 @@ Testing AI agents shouldn't be harder than testing APIs. Agent Tester brings the
 - 🎨 **Rich Output** - Beautiful, readable test results  
 - 🔌 **Multi-Platform** - Works with Azure, OpenAI, LangChain, and more
 - 🚀 **Production-Ready** - Enterprise-grade validation and reporting
+- 🛡️ **Built-in Security** - Automated vulnerability scanning and security best practices
 
 ## 🚀 Quick Start
 
@@ -85,6 +87,19 @@ export OPENAI_API_KEY="your-api-key"
 python examples/example_test_openai_agent.py
 ```
 
+### Anthropic (Claude)
+
+```bash
+# Install Anthropic SDK
+pip install anthropic
+
+# Configure
+export ANTHROPIC_API_KEY="your-api-key"
+
+# Test
+python examples/example_anthropic_agent.py
+```
+
 ## 💻 Usage
 
 ### CLI (Recommended - Postman-like Experience)
@@ -107,6 +122,12 @@ agent-tester security
 
 # Run security scan with custom output
 agent-tester security --format json --output security_report.json
+# Security Scanning
+agent-tester security scan                    # Run full security scan
+agent-tester security scan --type sast        # Run only SAST
+agent-tester security scan --type dependency  # Check dependencies
+agent-tester security report                  # Quick security summary
+agent-tester security check-deps              # Check for vulnerable deps
 
 # See all commands
 agent-tester --help
@@ -287,15 +308,58 @@ agent-tester/
 │       ├── security_validator.py # Orchestrator
 │       ├── security_reporter.py # Report generation
 │       └── knowledge_base.py    # OWASP/SANS/MITRE
+│   └── security/                # Security scanning (NEW!)
+│       ├── sast_scanner.py      # Static security analysis
+│       ├── dependency_scanner.py # Dependency vulnerabilities
+│       ├── secret_scanner.py    # Secret detection
+│       ├── config_scanner.py    # Configuration security
+│       └── security_orchestrator.py # Scan coordination
 ├── examples/                    # Usage examples
 │   ├── simple_example.py
 │   └── security_scan_example.py
 ├── tests/                       # Test files
+│   └── security/                # Security module tests
+├── .github/workflows/           # CI/CD workflows
+│   └── security-scan.yml        # Automated security scanning
 ├── pyproject.toml               # Package configuration
 ├── QUICKSTART.md                # Getting started guide
 ├── SECURITY_MODULE.md           # Security documentation
 └── README.md                    # This file
 ```
+
+## 🛡️ Security Features
+
+Agent Tester includes comprehensive security scanning capabilities:
+
+### Built-in Security Scanners
+
+- **SAST (Static Application Security Testing)**: Detects SQL injection, XSS, command injection, path traversal, eval usage, weak crypto, and more
+- **Dependency Scanning**: Identifies known CVEs in your dependencies
+- **Secret Detection**: Finds exposed API keys, passwords, tokens (AWS, GitHub, OpenAI, etc.)
+- **Configuration Security**: Checks for insecure defaults and misconfigurations
+
+### Quick Security Scan
+
+```bash
+# Run full security scan
+agent-tester security scan
+
+# Generate HTML report
+agent-tester security scan --format html --output security_report
+
+# Check only dependencies
+agent-tester security check-deps
+```
+
+### Continuous Security Monitoring
+
+The included GitHub Actions workflow automatically:
+- Scans every push and PR
+- Posts security summaries on PRs
+- Runs daily security audits
+- Blocks merges with critical vulnerabilities
+
+See [Security Documentation](agent_tester/security/README.md) for detailed information.
 
 ## Testing
 
@@ -347,6 +411,7 @@ Report security issues per [SECURITY.md](SECURITY.md).
 
 - Azure AI Foundry
 - OpenAI
+- Anthropic (Claude)
 - GitHub Models
 - LangChain
 - Custom Agents

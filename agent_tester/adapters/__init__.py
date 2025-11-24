@@ -5,6 +5,7 @@ Adapters for different AI platforms
 Adapters allow the framework to work with different AI agent platforms:
 - Azure AI Foundry
 - OpenAI
+- Cloud (generic cloud-based services)
 - Anthropic
 - LangChain
 - Custom agents
@@ -16,14 +17,23 @@ Example Usage:
 --------------
 from agent_tester.adapters.azure_adapter import AzureAIFoundryAdapter
 from agent_tester.adapters.openai_adapter import OpenAIAdapter
+from agent_tester.adapters.anthropic_adapter import AnthropicAdapter
+from agent_tester.adapters.cloud_adapter import CloudAdapter
 
-# Azure
+# Azure 
 azure_adapter = AzureAIFoundryAdapter()
 result = azure_adapter.execute_task(task)
 
 # OpenAI
 openai_adapter = OpenAIAdapter(model="gpt-4o-mini")
 result = openai_adapter.execute_task(task)
+
+# Anthropic
+anthropic_adapter = AnthropicAdapter(model="claude-3-5-sonnet-20241022")
+result = anthropic_adapter.execute_task(task)
+# Cloud
+cloud_adapter = CloudAdapter(api_endpoint="https://api.example.com", api_key="key")
+result = cloud_adapter.execute_task(task)
 """
 
 try:
@@ -36,7 +46,17 @@ try:
 except ImportError:
     OpenAIAdapter = None
 
+try:
+    from agent_tester.adapters.anthropic_adapter import AnthropicAdapter
+except ImportError:
+    AnthropicAdapter = None
+    from agent_tester.adapters.cloud_adapter import CloudAdapter
+except ImportError:
+    CloudAdapter = None
+
 __all__ = [
     "AzureAIFoundryAdapter",
     "OpenAIAdapter",
+    "AnthropicAdapter",
+    "CloudAdapter",
 ]

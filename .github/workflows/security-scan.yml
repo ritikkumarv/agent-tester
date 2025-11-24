@@ -18,16 +18,29 @@ jobs:
       contents: read
       issues: write
       pull-requests: write
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  issues: write
+
+jobs:
+  security-scan:
+    name: Security Vulnerability Scan
+    runs-on: ubuntu-latest
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       
+        
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       
+          
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -56,6 +69,58 @@ jobs:
           exit 1
       
       - name: Comment PR with Security Summary
+          
+      - name: Run Full Security Scan
+        id: security_scan
+        run: |
+          python -c "
+          from agent_tester.security import SecurityOrchestrator
+          orchestrator = SecurityOrchestrator('.')
+          report = orchestrator.run_full_scan()
+          orchestrator.generate_report_file(report, 'json', 'security_report')
+          orchestrator.generate_report_file(report, 'html', 'security_report')
+          orchestrator.generate_report_file(report, 'markdown', 'security_report')
+          print(f'Found {len(report.issues)} total security issues')
+          print(f'Critical: {len(report.get_critical_issues())}')
+          "
+        continue-on-error: true
+        
+      - name: Upload Security Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-report
+          path: |
+            security_report.json
+            security_report.html
+            security_report.md
+          retention-days: 30
+          
+      - name: Check for Critical Issues
+        run: |
+          python -c "
+          import json
+          import sys
+          try:
+              with open('security_report.json', 'r') as f:
+                  report = json.load(f)
+              critical_count = report.get('summary', {}).get('by_severity', {}).get('critical', 0)
+              high_count = report.get('summary', {}).get('by_severity', {}).get('high', 0)
+              
+              print(f'Critical issues: {critical_count}')
+              print(f'High severity issues: {high_count}')
+              
+              if critical_count > 0:
+                  print('::error::Critical security vulnerabilities detected!')
+                  sys.exit(1)
+              elif high_count > 5:
+                  print('::warning::Multiple high severity vulnerabilities detected')
+          except FileNotFoundError:
+              print('Security report not found')
+              sys.exit(0)
+          "
+          
+      - name: Comment on PR
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
         with:
@@ -71,6 +136,26 @@ jobs:
               const summary = summaryMatch ? summaryMatch[0] : 'Security scan completed.';
               
               const comment = `## 🔒 Security Scan Results\n\n${summary}\n\n📄 Full report available in workflow artifacts.`;
+            try {
+              const report = JSON.parse(fs.readFileSync('security_report.json', 'utf8'));
+              const summary = report.summary || {};
+              const bySeverity = summary.by_severity || {};
+              
+              const comment = `## 🛡️ Security Scan Results
+              
+              | Severity | Count |
+              |----------|-------|
+              | 🔴 Critical | ${bySeverity.critical || 0} |
+              | 🟠 High | ${bySeverity.high || 0} |
+              | 🟡 Medium | ${bySeverity.medium || 0} |
+              | 🔵 Low | ${bySeverity.low || 0} |
+              | ⚪ Info | ${bySeverity.info || 0} |
+              
+              **Total Issues:** ${summary.total_issues || 0}
+              **Exploitable:** ${summary.exploitable_count || 0}
+              
+              📄 [View Detailed Report](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID})
+              `;
               
               github.rest.issues.createComment({
                 issue_number: context.issue.number,
@@ -87,6 +172,13 @@ jobs:
       contents: read
       pull-requests: write
     if: github.event_name == 'pull_request'
+            } catch (error) {
+              console.log('Could not post comment:', error.message);
+            }
+
+  dependency-check:
+    name: Dependency Vulnerability Check
+    runs-on: ubuntu-latest
     
     steps:
       - name: Checkout code
@@ -97,3 +189,66 @@ jobs:
         with:
           fail-on-severity: moderate
           comment-summary-in-pr: true
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          
+      - name: Install pip-audit
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit
+          
+      - name: Run pip-audit
+        run: |
+          pip-audit --format json --output pip-audit-report.json || true
+          
+      - name: Upload pip-audit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pip-audit-report
+          path: pip-audit-report.json
+          retention-days: 30
+
+  secret-scan:
+    name: Secret Detection Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for secret scanning
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          
+      - name: Run Secret Scanner
+        run: |
+          python -c "
+          from agent_tester.security import SecretScanner
+          scanner = SecretScanner()
+          issues = scanner.scan_directory('.')
+          print(f'Found {len(issues)} potential secrets')
+          if issues:
+              print('WARNING: Potential secrets detected!')
+              for issue in issues[:5]:
+                  print(f'  - {issue.title} in {issue.file_path}:{issue.line_number}')
+          "
+          
+      - name: TruffleHog Secret Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified

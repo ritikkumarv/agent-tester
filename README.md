@@ -86,6 +86,19 @@ export OPENAI_API_KEY="your-api-key"
 python examples/example_test_openai_agent.py
 ```
 
+### Anthropic (Claude)
+
+```bash
+# Install Anthropic SDK
+pip install anthropic
+
+# Configure
+export ANTHROPIC_API_KEY="your-api-key"
+
+# Test
+python examples/example_anthropic_agent.py
+```
+
 ## 💻 Usage
 
 ### CLI (Recommended - Postman-like Experience)
@@ -302,6 +315,7 @@ Report security issues per [SECURITY.md](SECURITY.md).
 
 - Azure AI Foundry
 - OpenAI
+- Anthropic (Claude)
 - GitHub Models
 - LangChain
 - Custom Agents
